@@ -1,0 +1,7 @@
+# depslib dependency file v1.0
+1454709278 source:c:\users\pc\documents\ufg\estrutura de dados\teatro\main.c
+	<stdio.h>
+	<stdlib.h>
+	<conio.h>
+	<string.h>
+
