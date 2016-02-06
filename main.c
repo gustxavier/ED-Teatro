@@ -24,11 +24,6 @@ typedef struct{
     char tel[11];
 }T_Pessoa;
 
-typedef struct{
-    int cod;
-    char nome[TAM_ARQ];
-}T_Sessao;
-
 typedef struct Cx{
     T_Pessoa Item;
     struct Cx *Prox;
@@ -36,22 +31,31 @@ typedef struct Cx{
 
 typedef Caixa *Ponteiro;
 
+
 typedef struct{
     Ponteiro Prim, Ult;
     int Tam;
 }Lista_din_enc;
 
+void Menu_Principal();
+int Menu_Principal_Opcao();
+void Menu_ADM();
+void Menu_Sessao();
 void Criar_Lista_Vazia(Lista_din_enc *L);
-int Verifica_Lista_Vazia(Lista_din_enc );
-void Insere_Elemento_Lista(Lista_din_enc *L, T_Pessoa X, char matriz[ROW][COL]);
+int Verifica_Lista_Vazia(Lista_din_enc L);
+void Insere_Elemento_Lista(Lista_din_enc *L, T_Pessoa X);
 void Exibir_Elemento(T_Pessoa);
+void Exibir_Elemento_Session(T_Pessoa);
 void Remove_Elemento_Lista(Lista_din_enc *L, T_Pessoa *X);
 void Exibir_Lista(Lista_din_enc);
+void Exibir_Lista_Session(Lista_din_enc);
 void Consulta_Elemento(Lista_din_enc , int);
 void Dados_Pessoa(T_Pessoa *X);
+void Dados_Sessao(T_Pessoa *S);
 void Gravar_Arquivo(char arquivo[TAM_ARQ], Lista_din_enc *L);
-void Carregar_Arquivo(char arquivo[TAM_ARQ], Lista_din_enc *L, T_Pessoa X, char matriz[ROW][COL]);
-
+void Gravar_Arquivo_Sessoes(Lista_din_enc *L);
+void Carregar_Arquivo(char arquivo[TAM_ARQ], Lista_din_enc *L, T_Pessoa X);
+void Carregar_Sessoes(Lista_din_enc, T_Pessoa);
 //Matriz
 void Inicializa_Matriz(char matriz[ROW][COL]);
 void Mostrar_Painel(char matriz[ROW][COL]);
@@ -65,88 +69,23 @@ void Mensagens(int op);
 void Limpar_Tela();
 
 
-void Criar_Sessao(){
-    T_Sessao S;
-    char buffer[] = ".dat";
-    Lista_din_enc L;
-    FILE *arq;
-    Ponteiro P;
-    Criar_Lista_Vazia(&L);
+int main(){
 
-    Limpar_Tela();
-    printf("\n\n              ######  T E A T R O  ######");
-    printf("\n\n               #####  SESSOES ADM  #####\n\n");
-    printf("\n  Nome da Sessao: ");
-    scanf("%s", S.nome);
-    do{
-        printf("\n  Codigo da Sessao: ");
-        scanf("%d", &S.cod);
-        if(S.cod == 00 || S.cod == 01){
-            Mensagens(10);
-            Mensagens(5);
-        }
-    }while(S.cod == 00 || S.cod == 01);
+    Menu_Principal();
 
-    strcat(S.nome, buffer);
-    arq = fopen("sessoes.dat", "wb");
-    if(arq!=NULL){
-        P=L.Prim->Prox;
-        while(P!=NULL){
-            fwrite(&(P->Item), sizeof(T_Sessao),1,arq);   //fechamento
-            P=P->Prox;
-           }
-        fclose(arq);
-    }
-}
-
-void Menu_ADM(){
-    int parar = FALSE;
-    int op;
-    do{
-        Limpar_Tela();
-        printf("\n\n              ######  T E A T R O  ######");
-        printf("\n\n               #####  SESSOES ADM  #####\n\n");
-        printf("          *  1- Criar Sessao               *\n");
-//        printf("          *  2- Remover Sessao               *\n");
-        printf("          *  3- Sair                       *\n");
-        scanf("%d", & op);
-        switch(op){
-            case 1:
-                Criar_Sessao();
-                break;
-            case 3:
-                parar = TRUE;
-        }
-    }while(parar!=TRUE);
-}
-
-void Carregar_Sessoes(){
-    FILE *arq;
-    T_Pessoa X;
-    Lista_din_enc L;
-    char matriz[ROW][COL];
-
-    arq = fopen("sessoes.dat", "rb");
-                   if (arq!=NULL)
-                       {Criar_Lista_Vazia(&L);
-						X.cod=0;
-                        while (!feof(arq))
-						  { if(X.cod!=0)
-							  Insere_Elemento_Lista(&L,X,matriz);
-							fread(&X, sizeof(T_Pessoa), 1, arq);   //fechamento
-						   }
-					   fclose(arq);
-					  }
+    getchar();
+    return 0;
 }
 
 int Menu_Principal_Opcao(){
     int opcao;
+    Lista_din_enc L;
     system("cls");
     printf("\n\n   00- SAIR / 01-ADM\n\n");
     printf("\n\n              ######  T E A T R O  ######");
     printf("\n\n                ######  SESSOES  ######\n\n");
-    Carregar_Sessoes();
-
+//    Carregar_Sessoes(L);
+    Exibir_Lista_Session(L);
     printf("                 opcao: ");
 
     scanf("%d",&opcao);
@@ -162,6 +101,9 @@ void Menu_Principal(){
         system("cls");
         opcao = Menu_Principal_Opcao();
         switch(opcao){
+            case 2:
+                Menu_Sessao();
+            break;
             case 00:
                 Mensagens(7);
                 parar = TRUE;
@@ -176,66 +118,114 @@ void Menu_Principal(){
     }while(parar!=TRUE);
 }
 
+void Menu_ADM(){
+    int parar = FALSE;
+    int op;
+    T_Pessoa X;
+    Lista_din_enc L;
+    FILE *arq;
+    Ponteiro P;
+    Criar_Lista_Vazia(&L);
 
-int main(){
+    do{
+        Limpar_Tela();
+        printf("\n\n              ######  T E A T R O  ######");
+        printf("\n\n               #####  SESSOES ADM  #####\n\n");
+        printf("          *  1- Criar Sessao               *\n");
+//        printf("          *  2- Remover Sessao               *\n");
+        printf("          *  3- Sair                       *\n");
+        printf("          *  4- Exibir Lista               *\n");
+        printf("          *  5- Carregar Lista               *\n");
+        printf("\n\n         Opcao: ");
+        scanf("%d", & op);
+        switch(op){
+            case 1:
+                Limpar_Tela();
+                printf("\n\n              ######  T E A T R O  ######");
+                printf("\n\n               #####  SESSOES ADM  #####\n\n");
+                Dados_Sessao(&X);
+                Insere_Elemento_Lista(&L,X);
+                Exibir_Elemento_Session(X);
+                arq = fopen("sessoes.dat", "wb");
+                if(arq!=NULL)
+                  {
+                    P=L.Prim->Prox;
+                    while(P!=NULL)
+                      { fwrite(&(P->Item), sizeof(T_Pessoa),1,arq);   //fechamento
+                        P=P->Prox;
+                       }
+                    fclose(arq);
+                   }
+                   getch();
+                break;
+            case 3:
+                parar = TRUE;
+                break;
+            case 4:
+                Exibir_Lista_Session(L);
+                Mensagens(5);
+                break;
+            case 5:
+                Carregar_Sessoes(&L,X);
+                break;
+        }
+    }while(parar!=TRUE);
+}
 
-    Menu_Principal();
-//    char matriz[ROW][COL];
-//    int opcao;
-//    char arquivo[TAM_ARQ];
-//    int loopContinue=TRUE;
-//    Lista_din_enc L;
-//    T_Pessoa X;
-//
-//    Criar_Lista_Vazia(&L);
-//
-//    Inicializa_Matriz(matriz); //Iniciliza a matriz com valores .(Livre)
-//
-//    do{
-//         system("cls");//Limpa a tela
-//         opcao = Menu_Opcao();
-//         switch(opcao){
-//            case 1://Comprar
-//                system("cls");
-//                Mostrar_Painel(matriz);//Mostra o Painel atualizado
-//                Dados_Pessoa(&X);
-//                Selecionar_Cadeira(matriz,&X);
-//                Insere_Elemento_Lista(&L,X,matriz); // Realiza a compra de uma cadeira no painel, marcando c/ um X
-//                break;
-//            case 2://Reservar
-//                system("cls");
-//                Mostrar_Painel(matriz);
-//                Reservar(matriz); //Realiza a reserva de uma cadeira no painel, marcando c/ um R
-//                break;
-//            case 3://Mostrar Painel
-//                system("cls");
-//                Mostrar_Painel(matriz);
-//                Exibir_Lista(L);
-//                Mensagens(5);
-//                break;
-//            case 4://Gravar arquivo
-//                printf("nome do arquivo: ");
-//                scanf("%s", arquivo);
-//                Gravar_Arquivo(arquivo, &L);
-//                break;
-//            case 5://Carregar em arquivo
-//                printf("nome do arquivo: ");
-//                scanf("%s", arquivo);
-//                Carregar_Arquivo(arquivo, &L, X, matriz);
-//                break;
-//            case 6: //Sair
-//                printf("\nObrigado por usar nosso software!\n");
-//                loopContinue = FALSE; //condicao para saída do programa
-//                break;
-//            default:
-//                printf("\n\n\n    DIGITE APENAS VALORES CORESPONDENTES AO MENU !!");
-//                Mensagens(5);
-//                break;
-//         }
-//    }while(loopContinue);
+void Menu_Sessao(){
+    char matriz[ROW][COL];
+    int opcao;
+    char arquivo[TAM_ARQ];
+    int loopContinue=TRUE;
+    Lista_din_enc L;
+    T_Pessoa X;
 
-    getchar();
-    return 0;
+    Criar_Lista_Vazia(&L);
+
+    Inicializa_Matriz(matriz); //Iniciliza a matriz com valores .(Livre)
+
+    do{
+         system("cls");//Limpa a tela
+         opcao = Menu_Opcao();
+         switch(opcao){
+            case 1://Comprar
+                system("cls");
+                Mostrar_Painel(matriz);//Mostra o Painel atualizado
+                Dados_Pessoa(&X);
+                Selecionar_Cadeira(matriz,&X);
+                Insere_Elemento_Lista(&L,X); // Realiza a compra de uma cadeira no painel, marcando c/ um X
+                break;
+            case 2://Reservar
+                system("cls");
+                Mostrar_Painel(matriz);
+                Reservar(matriz); //Realiza a reserva de uma cadeira no painel, marcando c/ um R
+                break;
+            case 3://Mostrar Painel
+                system("cls");
+                Mostrar_Painel(matriz);
+                Exibir_Lista(L);
+                Mensagens(5);
+                break;
+            case 4://Gravar arquivo
+                printf("nome do arquivo: ");
+                scanf("%s", arquivo);
+                Gravar_Arquivo(arquivo, &L);
+                break;
+            case 5://Carregar em arquivo
+                printf("nome do arquivo: ");
+                scanf("%s", arquivo);
+                Carregar_Arquivo(arquivo, &L, X);
+                break;
+            case 6: //Sair
+                printf("\nObrigado por usar nosso software!\n");
+                loopContinue = FALSE; //condicao para saída do programa
+                break;
+            default:
+                printf("\n\n\n    DIGITE APENAS VALORES CORESPONDENTES AO MENU !!");
+                Mensagens(5);
+                break;
+         }
+    }while(loopContinue);
 }
 
 //Cria lista dinâmica vazia
@@ -253,7 +243,7 @@ int Verifica_Lista_Vazia(Lista_din_enc L){
 }
 
 //Insere um elemento na lista
-void Insere_Elemento_Lista(Lista_din_enc *L, T_Pessoa X, char matriz[ROW][COL]){
+void Insere_Elemento_Lista(Lista_din_enc *L, T_Pessoa X){
     Ponteiro P, A;
     P = (Ponteiro) malloc(sizeof (Caixa));
     P->Item = X;
@@ -267,11 +257,14 @@ void Insere_Elemento_Lista(Lista_din_enc *L, T_Pessoa X, char matriz[ROW][COL]){
         L->Ult = P;
     }
     L->Tam++;
-
 }
 
 void Exibir_Elemento(T_Pessoa X){
     printf("  %5d - %s - CADEIRA:%d%d\n",X.cod, X.nome,X.c_lin,X.c_col);
+}
+
+void Exibir_Elemento_Session(T_Pessoa S){
+    printf("  %5d - %s \n",S.cod, S.nome);
 }
 
  void Remove_Elemento_Lista(Lista_din_enc *L, T_Pessoa *X)
@@ -309,6 +302,19 @@ void Exibir_Elemento(T_Pessoa X){
 			 }
 }
 
+ void Exibir_Lista_Session(Lista_din_enc L){
+    Ponteiro P;
+
+	if(Verifica_Lista_Vazia(L))
+	   printf("Lista Vazia - nada para exibir \n\n");
+	  else { P = L.Prim;
+		     while(P!=L.Ult)
+		       { Exibir_Elemento_Session(P->Prox->Item);
+				 P=P->Prox;
+			    }
+      }
+}
+
  void Consulta_Elemento(Lista_din_enc L, int cod){ Ponteiro P;
     if(Verifica_Lista_Vazia (L))
       printf("A Lista esta vazia - consulta\n");
@@ -333,6 +339,19 @@ void Dados_Pessoa(T_Pessoa *X){
     scanf("%s", X->tel);
 }
 
+void Dados_Sessao(T_Pessoa *X){
+    printf("\n  Nome da Sessao: ");
+    scanf("%s", X->nome);
+    do{
+        printf("\n  Codigo da Sessao: ");
+        scanf("%d", &X->cod);
+        if(X->cod == 00 || X->cod == 01){
+            Mensagens(10);
+            Mensagens(5);
+        }
+    }while(X->cod == 00 || X->cod == 01);
+}
+
 void Gravar_Arquivo(char arquivo[TAM_ARQ], Lista_din_enc *L){
     FILE *arq;
     Ponteiro P;
@@ -350,7 +369,22 @@ void Gravar_Arquivo(char arquivo[TAM_ARQ], Lista_din_enc *L){
     }
 }
 
-void Carregar_Arquivo(char arquivo[TAM_ARQ], Lista_din_enc *L, T_Pessoa X, char matriz[ROW][COL]){
+void Gravar_Arquivo_Sessoes(Lista_din_enc *L){
+    FILE *arq;
+    Ponteiro P;
+    arq = fopen("arquivo.dat", "wb");
+    if(arq!=NULL)
+      {
+        P=L->Prim->Prox;
+        while(P!=NULL)
+          { fwrite(&(P->Item), sizeof(T_Pessoa),1,arq);   //fechamento
+            P=P->Prox;
+           }
+        fclose(arq);
+       }
+}
+
+void Carregar_Arquivo(char arquivo[TAM_ARQ], Lista_din_enc *L, T_Pessoa X){
     FILE *arq;
     char buffer[] = ".dat";
 
@@ -361,12 +395,29 @@ void Carregar_Arquivo(char arquivo[TAM_ARQ], Lista_din_enc *L, T_Pessoa X, char 
         X.cod=0;
         while (!feof(arq)){
             if(X.cod!=0)
-              Insere_Elemento_Lista(L,X,matriz);
+              Insere_Elemento_Lista(L,X);
             fread(&X, sizeof(T_Pessoa), 1, arq);   //fechamento
            }
        fclose(arq);
       }
 }
+
+void Carregar_Sessoes(Lista_din_enc *L, T_Pessoa X){
+    FILE *arq;
+
+    arq = fopen("sessoes.dat", "rb");
+        if (arq!=NULL){
+            Criar_Lista_Vazia(&L);
+            X.cod=0;
+            while (!feof(arq))
+              { if(X.cod!=0)
+                  Insere_Elemento_Lista(&L,X);
+                fread(&X, sizeof(T_Pessoa), 1, arq);   //fechamento
+               }
+            fclose(arq);
+        }
+}
+
 /********************* M A T R I Z *********************/
 
 void Inicializa_Matriz(char matriz[ROW][COL]){
@@ -510,10 +561,10 @@ void Mensagens(int op){
             printf("\n\n      OPERACAO REALIZADA COM SUCESSO!");
             break;
         case 9:
-            printf("\n\n      FALHA NA OPERAÇÃO!");
+            printf("\n\n      FALHA NA OPERACAO!");
             break;
         case 10:
-            printf("ESTE CÓDIGO NÃO ESTÁ DISPONÍVEL!");
+            printf("ESTE CODIGO NAO ESTA DISPONIVEL!");
             break;
     }
 }
