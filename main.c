@@ -38,9 +38,8 @@ typedef struct{
 }Lista_din_enc;
 
 void Menu_Principal();
-int Menu_Principal_Opcao();
 void Menu_ADM();
-void Menu_Sessao();
+void Menu_Sessao(char arquivo[TAM_ARQ]);
 void Criar_Lista_Vazia(Lista_din_enc *L);
 int Verifica_Lista_Vazia(Lista_din_enc L);
 void Insere_Elemento_Lista(Lista_din_enc *L, T_Pessoa X);
@@ -49,13 +48,13 @@ void Exibir_Elemento_Session(T_Pessoa);
 void Remove_Elemento_Lista(Lista_din_enc *L, T_Pessoa *X);
 void Exibir_Lista(Lista_din_enc);
 void Exibir_Lista_Session(Lista_din_enc);
-void Consulta_Elemento(Lista_din_enc , int);
+int Consulta_Elemento(Lista_din_enc , int);
 void Dados_Pessoa(T_Pessoa *X);
 void Dados_Sessao(T_Pessoa *S);
 void Gravar_Arquivo(char arquivo[TAM_ARQ], Lista_din_enc *L);
 void Gravar_Arquivo_Sessoes(Lista_din_enc *L);
 void Carregar_Arquivo(char arquivo[TAM_ARQ], Lista_din_enc *L, T_Pessoa X);
-void Carregar_Sessoes(Lista_din_enc, T_Pessoa);
+void Carregar_Sessoes(Lista_din_enc *L, T_Pessoa X);
 //Matriz
 void Inicializa_Matriz(char matriz[ROW][COL]);
 void Mostrar_Painel(char matriz[ROW][COL]);
@@ -77,33 +76,29 @@ int main(){
     return 0;
 }
 
-int Menu_Principal_Opcao(){
-    int opcao;
-    Lista_din_enc L;
-    system("cls");
-    printf("\n\n   00- SAIR / 01-ADM\n\n");
-    printf("\n\n              ######  T E A T R O  ######");
-    printf("\n\n                ######  SESSOES  ######\n\n");
-//    Carregar_Sessoes(L);
-    Exibir_Lista_Session(L);
-    printf("                 opcao: ");
-
-    scanf("%d",&opcao);
-
-    return opcao;
-}
-
 void Menu_Principal(){
     int opcao;
     int parar = FALSE;
+    Lista_din_enc L;
+    T_Pessoa X;
 
+
+    Criar_Lista_Vazia(&L);
     do{
         system("cls");
-        opcao = Menu_Principal_Opcao();
+        printf("\n\n   00- SAIR / 01-ADM\n\n");
+        printf("\n\n         ######  T E A T R O  ######");
+        printf("\n\n           ######  SESSOES  ######\n\n");
+        printf("        -----------------------------");
+        printf("\n            COD. |       NOME\n");
+        printf("        -----------------------------\n");
+        Carregar_Sessoes(&L,X);
+        Exibir_Lista_Session(L);
+        printf("        -----------------------------");
+        printf("\n\n        >>Digite o codigo da sessao: ");
+
+        scanf("%d",&opcao);
         switch(opcao){
-            case 2:
-                Menu_Sessao();
-            break;
             case 00:
                 Mensagens(7);
                 parar = TRUE;
@@ -112,8 +107,9 @@ void Menu_Principal(){
                 Menu_ADM();
                 break;
             default:
-                Mensagens(6);
-                Mensagens(5);
+                if(Consulta_Elemento(L, opcao)){
+                    Menu_Sessao(X.nome);
+                }
         }
     }while(parar!=TRUE);
 }
@@ -132,10 +128,8 @@ void Menu_ADM(){
         printf("\n\n              ######  T E A T R O  ######");
         printf("\n\n               #####  SESSOES ADM  #####\n\n");
         printf("          *  1- Criar Sessao               *\n");
-//        printf("          *  2- Remover Sessao               *\n");
+        printf("          *  2- Remover Sessao             *\n");
         printf("          *  3- Sair                       *\n");
-        printf("          *  4- Exibir Lista               *\n");
-        printf("          *  5- Carregar Lista               *\n");
         printf("\n\n         Opcao: ");
         scanf("%d", & op);
         switch(op){
@@ -147,41 +141,40 @@ void Menu_ADM(){
                 Insere_Elemento_Lista(&L,X);
                 Exibir_Elemento_Session(X);
                 arq = fopen("sessoes.dat", "wb");
-                if(arq!=NULL)
-                  {
+                if(arq!=NULL){
                     P=L.Prim->Prox;
-                    while(P!=NULL)
-                      { fwrite(&(P->Item), sizeof(T_Pessoa),1,arq);   //fechamento
+                    while(P!=NULL){
+                        fwrite(&(P->Item), sizeof(T_Pessoa),1,arq);   //fechamento
                         P=P->Prox;
-                       }
+                    }
                     fclose(arq);
-                   }
-                   getch();
+                }
+//                Gravar_Arquivo(X.nome,&L);
+                printf("%c",X.nome);
+                getch();
+                Mensagens(8);
+                Mensagens(5);
+                break;
+            case 2:
+                Mensagens(1);
                 break;
             case 3:
                 parar = TRUE;
-                break;
-            case 4:
-                Exibir_Lista_Session(L);
-                Mensagens(5);
-                break;
-            case 5:
-                Carregar_Sessoes(&L,X);
                 break;
         }
     }while(parar!=TRUE);
 }
 
-void Menu_Sessao(){
+void Menu_Sessao(char arquivo[TAM_ARQ]){
     char matriz[ROW][COL];
     int opcao;
-    char arquivo[TAM_ARQ];
     int loopContinue=TRUE;
     Lista_din_enc L;
     T_Pessoa X;
-
+    printf("%s",arquivo);
+    getch();
     Criar_Lista_Vazia(&L);
-
+    Carregar_Arquivo(arquivo,&L,X);
     Inicializa_Matriz(matriz); //Iniciliza a matriz com valores .(Livre)
 
     do{
@@ -189,19 +182,22 @@ void Menu_Sessao(){
          opcao = Menu_Opcao();
          switch(opcao){
             case 1://Comprar
-                system("cls");
+                Limpar_Tela();
                 Mostrar_Painel(matriz);//Mostra o Painel atualizado
                 Dados_Pessoa(&X);
                 Selecionar_Cadeira(matriz,&X);
                 Insere_Elemento_Lista(&L,X); // Realiza a compra de uma cadeira no painel, marcando c/ um X
+                Gravar_Arquivo(arquivo, &L);
+                Mensagens(8);
+                Mensagens(5);
                 break;
             case 2://Reservar
-                system("cls");
+                Limpar_Tela();
                 Mostrar_Painel(matriz);
                 Reservar(matriz); //Realiza a reserva de uma cadeira no painel, marcando c/ um R
                 break;
             case 3://Mostrar Painel
-                system("cls");
+                Limpar_Tela();
                 Mostrar_Painel(matriz);
                 Exibir_Lista(L);
                 Mensagens(5);
@@ -217,11 +213,10 @@ void Menu_Sessao(){
                 Carregar_Arquivo(arquivo, &L, X);
                 break;
             case 6: //Sair
-                printf("\nObrigado por usar nosso software!\n");
                 loopContinue = FALSE; //condicao para saída do programa
                 break;
             default:
-                printf("\n\n\n    DIGITE APENAS VALORES CORESPONDENTES AO MENU !!");
+                Mensagens(6);
                 Mensagens(5);
                 break;
          }
@@ -264,7 +259,7 @@ void Exibir_Elemento(T_Pessoa X){
 }
 
 void Exibir_Elemento_Session(T_Pessoa S){
-    printf("  %5d - %s \n",S.cod, S.nome);
+    printf("          %5d  -  %s \n",S.cod, S.nome);
 }
 
  void Remove_Elemento_Lista(Lista_din_enc *L, T_Pessoa *X)
@@ -315,16 +310,22 @@ void Exibir_Elemento_Session(T_Pessoa S){
       }
 }
 
- void Consulta_Elemento(Lista_din_enc L, int cod){ Ponteiro P;
-    if(Verifica_Lista_Vazia (L))
-      printf("A Lista esta vazia - consulta\n");
-     else { P = L.Prim->Prox;
-            while((P!=NULL)&&(cod > P->Item.cod))
-                P=P->Prox;
-            if ((P==NULL)||(cod!=P->Item.cod))
-              printf("Elemento NAO foi encontrado para consulta\n");
-             else  Exibir_Elemento(P->Item);
-            }
+int Consulta_Elemento(Lista_din_enc L, int cod){
+    Ponteiro P;
+    if(Verifica_Lista_Vazia (L)){
+        Mensagens(11);
+    }else {
+        P = L.Prim->Prox;
+        while((P!=NULL)&&(cod > P->Item.cod))
+            P=P->Prox;
+        if ((P==NULL)||(cod!=P->Item.cod)){
+            Mensagens(6);
+            Mensagens(5);
+        }else{
+            return TRUE;
+        }
+    }
+    return FALSE;
 }
 
 void Dados_Pessoa(T_Pessoa *X){
@@ -407,11 +408,11 @@ void Carregar_Sessoes(Lista_din_enc *L, T_Pessoa X){
 
     arq = fopen("sessoes.dat", "rb");
         if (arq!=NULL){
-            Criar_Lista_Vazia(&L);
+            Criar_Lista_Vazia(L);
             X.cod=0;
             while (!feof(arq))
               { if(X.cod!=0)
-                  Insere_Elemento_Lista(&L,X);
+                  Insere_Elemento_Lista(L,X);
                 fread(&X, sizeof(T_Pessoa), 1, arq);   //fechamento
                }
             fclose(arq);
@@ -565,6 +566,9 @@ void Mensagens(int op){
             break;
         case 10:
             printf("ESTE CODIGO NAO ESTA DISPONIVEL!");
+            break;
+        case 11:
+            printf("LISTA VAZIA !!!");
             break;
     }
 }
