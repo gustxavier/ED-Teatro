@@ -59,8 +59,8 @@ void Criar_Arquivo_Sessao(Lista_din_enc L, char arquivo[TAM_ARQ]);
 //Matriz
 void Inicializa_Matriz(char matriz[ROW][COL]);
 void Mostrar_Painel(char matriz[ROW][COL]);
-void Selecionar_Cadeira(char matriz[ROW][COL], T_Pessoa *X);
-void Reservar(char matriz[ROW][COL]);
+void Comprar_Cadeira(char matriz[ROW][COL], T_Pessoa *X);
+void Reservar_Cadeira(char matriz[ROW][COL], T_Pessoa *X);
 void Legenda();
 int Menu_Opcao();
 int ColunaY();
@@ -142,7 +142,7 @@ void Menu_ADM(){
                 Dados_Sessao(&X);
                 Insere_Elemento_Lista(&L,X);
                 strcpy(arquivo,X.nome);
-                arq = fopen("sessoes.dat", "wb");
+                arq = fopen("sessoes.bin", "wb");
                 if(arq!=NULL){
                     P=L.Prim->Prox;
                     while(P!=NULL){
@@ -181,22 +181,22 @@ void Menu_Sessao(char arquivo[TAM_ARQ]){
          opcao = Menu_Opcao();
          switch(opcao){
             case 1://Comprar
-                Limpar_Tela();
-                Mostrar_Painel(matriz);//Mostra o Painel atualizado
                 Dados_Pessoa(&X);
-                Selecionar_Cadeira(matriz,&X);
+                Mostrar_Painel(matriz);//Mostra o Painel atualizado
+                Comprar_Cadeira(matriz,&X);
                 Insere_Elemento_Lista(&L,X); // Realiza a compra de uma cadeira no painel, marcando c/ um X
-                Gravar_Arquivo(arquivo,&L);
+                Gravar_Arquivo_Sessoes(arquivo,&L);
+                Limpar_Tela();
                 Mensagens(8);
                 Mensagens(5);
                 break;
             case 2://Reservar
-                Limpar_Tela();
-                Mostrar_Painel(matriz);
-                Reservar(matriz); //Realiza a reserva de uma cadeira no painel, marcando c/ um R
+                Dados_Pessoa(&X);
+                Mostrar_Painel(matriz);//Mostra o Painel atualizado
+                Reservar_Cadeira(matriz,&X);
+                Insere_Elemento_Lista(&L,X); // Realiza a compra de uma cadeira no painel, marcando c/ um X
                 break;
             case 3://Mostrar Painel
-                Limpar_Tela();
                 Mostrar_Painel(matriz);
                 Exibir_Lista(L);
                 Mensagens(5);
@@ -254,7 +254,12 @@ void Insere_Elemento_Lista(Lista_din_enc *L, T_Pessoa X){
 }
 
 void Exibir_Elemento(T_Pessoa X){
-    printf("  %5d - %s - CADEIRA:%d%d\n",X.cod, X.nome,X.c_lin,X.c_col);
+    printf("\n************* CODIGO: %d *************\n",X.cod);
+    printf("*  Nome: %s \n",X.nome);
+    printf("*  E_Mail: %s \n",X.email);
+    printf("*  Telefone: %s\n",X.tel);
+    printf("*  Cadeira: %d%d\n",X.c_lin,X.c_col);
+    printf("****************************************\n");
 }
 
 void Exibir_Elemento_Session(T_Pessoa S){
@@ -328,17 +333,17 @@ void Consulta_Elemento(Lista_din_enc L, int cod){
 }
 
 void Dados_Pessoa(T_Pessoa *X){
+    Limpar_Tela();
     printf("        -----------------------------");
-    printf("\n            DADOS DO CLIENTE\n");
+    printf("\n              DADOS DO CLIENTE\n");
     printf("        -----------------------------\n");
-    printf("***** Registro de Dados - CLIENTE *****\n");
     printf("\n     Entre com um Codigo: ");
     scanf("%d",&(X->cod));
     printf("\n     Entre com o Nome : ");
     scanf("%s",X->nome);
-    printf("\n*     Entre com o email: ");
+    printf("\n     Entre com o E-mail: ");
     scanf("%s",X->email);
-    printf("\n*     Entre com o Telefone: ");
+    printf("\n     Entre com o Telefone: ");
     scanf("%s", X->tel);
 }
 
@@ -358,7 +363,7 @@ void Dados_Sessao(T_Pessoa *X){
 void Gravar_Arquivo(char arquivo[TAM_ARQ], Lista_din_enc *L){
     FILE *arq;
     Ponteiro P;
-    char buffer[] = ".dat";
+    char buffer[] = ".bin";
 
     strcat(arquivo, buffer);
     arq = fopen(arquivo, "wb");
@@ -389,7 +394,7 @@ void Gravar_Arquivo_Sessoes(char arquivo[TAM_ARQ],Lista_din_enc *L){
 
 void Carregar_Arquivo(char arquivo[TAM_ARQ], Lista_din_enc *L, T_Pessoa X){
     FILE *arq;
-    char buffer[] = ".dat";
+    char buffer[] = ".bin";
 
     strcat(arquivo, buffer);
     arq = fopen(arquivo, "rb");
@@ -408,7 +413,7 @@ void Carregar_Arquivo(char arquivo[TAM_ARQ], Lista_din_enc *L, T_Pessoa X){
 void Carregar_Sessoes(Lista_din_enc *L, T_Pessoa X){
     FILE *arq;
 
-    arq = fopen("sessoes.dat", "rb");
+    arq = fopen("sessoes.bin", "rb");
         if (arq!=NULL){
             Criar_Lista_Vazia(L);
             X.cod=0;
@@ -451,6 +456,7 @@ void Inicializa_Matriz(char matriz[ROW][COL]){
 
 void Mostrar_Painel(char matriz[ROW][COL]){
     int i,j;
+    Limpar_Tela();
     printf("\n\n         ####   PAINEL DE OCUPACOES   ####\n\n");
     printf("          ");
 
@@ -463,7 +469,7 @@ void Mostrar_Painel(char matriz[ROW][COL]){
             printf("   (%c)",matriz[i][j]);
     }
     //apresenta o menu na tela
-    Legenda();
+    Mensagens(12);
 }
 
 int Menu_Opcao(){
@@ -483,14 +489,13 @@ int Menu_Opcao(){
 
     return opcao;
 }
-//apresenta  a legenda na tela
-void Legenda(){
-    printf("\n\n\n        (.)-Livre  (X)-Ocupado  (R)-Reservado\n\n");
-}
-    //Efetiva a compra da cadeira
-void Selecionar_Cadeira(char matriz[ROW][COL],T_Pessoa *X){
+
+//Efetiva a compra da cadeira
+void Comprar_Cadeira(char matriz[ROW][COL],T_Pessoa *X){
     int row, col;
-    printf("\n       <<< COMPRA DE CADEIRAS >>>\n\n");
+    printf("        -----------------------------");
+    printf("\n             COMPRAR CADEIRA\n");
+    printf("        -----------------------------\n");
     row = LinhaX();
     col = ColunaY();
     X->c_lin = row;
@@ -498,34 +503,39 @@ void Selecionar_Cadeira(char matriz[ROW][COL],T_Pessoa *X){
 
     if(matriz[row][col]==32){//SPACE
         matriz[row][col] = 88;//X
-        system("cls");
-        printf("\n\n      COMPRA EFETIVADA COM SUCESSO !!");
+        Limpar_Tela();
+        Mensagens(1);
     }else if (matriz[row][col]==88){//X
-        printf("\n\n      CADEIRA OCUPADA!! ESCOLHA OUTRA !!\n\n");
+        Mensagens(3);
     }else if(matriz[row][col]==82){//R
-        printf("\n\n    CADEIRA RESERVADA!! ESCOLHA OUTRA !!\n\n");
+        Mensagens(4);
     }
     Mensagens(5);
 }
+
 //Reserva a cadeira no teatro
-void Reservar(char matriz[ROW][COL]){
-   int row, col;
-    printf("\n\n         RESERVA DE CADEIRAS\n\n");
-   row = LinhaX();
-   col = ColunaY();
+void Reservar_Cadeira(char matriz[ROW][COL],T_Pessoa *X){
+    int row, col;
+    printf("        -----------------------------");
+    printf("\n             RESERVAR CADEIRA\n");
+    printf("        -----------------------------\n");
+    row = LinhaX();
+    col = ColunaY();
+    X->c_lin = row;
+    X->c_col = col;
 
-   if(matriz[row][col]=='.'){
-       matriz[row][col] = 82;//R
-       printf("\n\n      RESERVA EFETIVADA COM SUCESSO !!");
-   }
-   else if (matriz[row][col]==88)//X
-             printf("\n\n      CADEIRA OCUPADA!! ESCOLHA OUTRA !!\n\n");
-        else if(matriz[row][col]==82)//R
-               printf("\n\n      CADEIRA RESERVADA !! ESCOLHA OUTRA !!\n\n");
-
+    if(matriz[row][col]==32){
+        matriz[row][col] = 82;//R
+        Mensagens(2);
+    }else if (matriz[row][col]==88){//X
+        Mensagens(3);
+    }else if(matriz[row][col]==82){//R
+        Mensagens(4);
+    }
     Mensagens(5);
 }
-//ler a linha oferecida pelo usuario
+
+//Ler a linha oferecida pelo usuario
 int LinhaX(){
     int row;
     do{
@@ -588,6 +598,9 @@ void Mensagens(int op){
             break;
         case 11:
             printf("\n            LISTA VAZIA !!!\n");
+            break;
+        case 12:
+            printf("\n\n\n       (.)-Livre  (X)-Ocupado  (R)-Reservado\n\n");
             break;
     }
 }
