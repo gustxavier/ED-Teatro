@@ -48,13 +48,14 @@ void Exibir_Elemento_Session(T_Pessoa);
 void Remove_Elemento_Lista(Lista_din_enc *L, T_Pessoa *X);
 void Exibir_Lista(Lista_din_enc);
 void Exibir_Lista_Session(Lista_din_enc);
-int Consulta_Elemento(Lista_din_enc , int);
+void Consulta_Elemento(Lista_din_enc , int);
 void Dados_Pessoa(T_Pessoa *X);
 void Dados_Sessao(T_Pessoa *S);
 void Gravar_Arquivo(char arquivo[TAM_ARQ], Lista_din_enc *L);
-void Gravar_Arquivo_Sessoes(Lista_din_enc *L);
+void Gravar_Arquivo_Sessoes(char arquivo[TAM_ARQ], Lista_din_enc *L);
 void Carregar_Arquivo(char arquivo[TAM_ARQ], Lista_din_enc *L, T_Pessoa X);
 void Carregar_Sessoes(Lista_din_enc *L, T_Pessoa X);
+void Criar_Arquivo_Sessao(Lista_din_enc L, char arquivo[TAM_ARQ]);
 //Matriz
 void Inicializa_Matriz(char matriz[ROW][COL]);
 void Mostrar_Painel(char matriz[ROW][COL]);
@@ -107,9 +108,8 @@ void Menu_Principal(){
                 Menu_ADM();
                 break;
             default:
-                if(Consulta_Elemento(L, opcao)){
-                    Menu_Sessao(X.nome);
-                }
+                Consulta_Elemento(L, opcao);
+                break;
         }
     }while(parar!=TRUE);
 }
@@ -117,8 +117,10 @@ void Menu_Principal(){
 void Menu_ADM(){
     int parar = FALSE;
     int op;
+    char arquivo[TAM_ARQ];
     T_Pessoa X;
     Lista_din_enc L;
+    Lista_din_enc L_NEW;
     FILE *arq;
     Ponteiro P;
     Criar_Lista_Vazia(&L);
@@ -139,7 +141,7 @@ void Menu_ADM(){
                 printf("\n\n               #####  SESSOES ADM  #####\n\n");
                 Dados_Sessao(&X);
                 Insere_Elemento_Lista(&L,X);
-                Exibir_Elemento_Session(X);
+                strcpy(arquivo,X.nome);
                 arq = fopen("sessoes.dat", "wb");
                 if(arq!=NULL){
                     P=L.Prim->Prox;
@@ -149,9 +151,8 @@ void Menu_ADM(){
                     }
                     fclose(arq);
                 }
-//                Gravar_Arquivo(X.nome,&L);
-                printf("%c",X.nome);
-                getch();
+                Criar_Lista_Vazia(&L_NEW);
+                Gravar_Arquivo(arquivo,&L_NEW);
                 Mensagens(8);
                 Mensagens(5);
                 break;
@@ -171,8 +172,6 @@ void Menu_Sessao(char arquivo[TAM_ARQ]){
     int loopContinue=TRUE;
     Lista_din_enc L;
     T_Pessoa X;
-    printf("%s",arquivo);
-    getch();
     Criar_Lista_Vazia(&L);
     Carregar_Arquivo(arquivo,&L,X);
     Inicializa_Matriz(matriz); //Iniciliza a matriz com valores .(Livre)
@@ -187,7 +186,7 @@ void Menu_Sessao(char arquivo[TAM_ARQ]){
                 Dados_Pessoa(&X);
                 Selecionar_Cadeira(matriz,&X);
                 Insere_Elemento_Lista(&L,X); // Realiza a compra de uma cadeira no painel, marcando c/ um X
-                Gravar_Arquivo(arquivo, &L);
+                Gravar_Arquivo(arquivo,&L);
                 Mensagens(8);
                 Mensagens(5);
                 break;
@@ -284,24 +283,25 @@ void Exibir_Elemento_Session(T_Pessoa S){
           }
    }
 
- void Exibir_Lista(Lista_din_enc L){
+void Exibir_Lista(Lista_din_enc L){
     Ponteiro P;
 
 	if(Verifica_Lista_Vazia(L))
-	   printf("Lista Vazia - nada para exibir \n\n");
-	  else { P = L.Prim;
-		     while(P!=L.Ult)
-		       { Exibir_Elemento(P->Prox->Item);
-				 P=P->Prox;
-			    }
-			 }
+        Mensagens(11);
+    else {
+        P = L.Prim;
+		while(P!=L.Ult){
+		    Exibir_Elemento(P->Prox->Item);
+             P=P->Prox;
+        }
+    }
 }
 
  void Exibir_Lista_Session(Lista_din_enc L){
     Ponteiro P;
 
 	if(Verifica_Lista_Vazia(L))
-	   printf("Lista Vazia - nada para exibir \n\n");
+	   Mensagens(11);
 	  else { P = L.Prim;
 		     while(P!=L.Ult)
 		       { Exibir_Elemento_Session(P->Prox->Item);
@@ -310,7 +310,7 @@ void Exibir_Elemento_Session(T_Pessoa S){
       }
 }
 
-int Consulta_Elemento(Lista_din_enc L, int cod){
+void Consulta_Elemento(Lista_din_enc L, int cod){
     Ponteiro P;
     if(Verifica_Lista_Vazia (L)){
         Mensagens(11);
@@ -322,21 +322,23 @@ int Consulta_Elemento(Lista_din_enc L, int cod){
             Mensagens(6);
             Mensagens(5);
         }else{
-            return TRUE;
+            Menu_Sessao(P->Item.nome);
         }
     }
-    return FALSE;
 }
 
 void Dados_Pessoa(T_Pessoa *X){
+    printf("        -----------------------------");
+    printf("\n            DADOS DO CLIENTE\n");
+    printf("        -----------------------------\n");
     printf("***** Registro de Dados - CLIENTE *****\n");
-    printf("\nEntre com o Código: ");
+    printf("\n     Entre com um Codigo: ");
     scanf("%d",&(X->cod));
-    printf("\nEntre com o Nome : ");
+    printf("\n     Entre com o Nome : ");
     scanf("%s",X->nome);
-    printf("\n* Entre com o email: ");
+    printf("\n*     Entre com o email: ");
     scanf("%s",X->email);
-    printf("\n* Entre com o Telefone: ");
+    printf("\n*     Entre com o Telefone: ");
     scanf("%s", X->tel);
 }
 
@@ -370,10 +372,10 @@ void Gravar_Arquivo(char arquivo[TAM_ARQ], Lista_din_enc *L){
     }
 }
 
-void Gravar_Arquivo_Sessoes(Lista_din_enc *L){
+void Gravar_Arquivo_Sessoes(char arquivo[TAM_ARQ],Lista_din_enc *L){
     FILE *arq;
     Ponteiro P;
-    arq = fopen("arquivo.dat", "wb");
+    arq = fopen(arquivo, "wb");
     if(arq!=NULL)
       {
         P=L->Prim->Prox;
@@ -417,6 +419,23 @@ void Carregar_Sessoes(Lista_din_enc *L, T_Pessoa X){
                }
             fclose(arq);
         }
+}
+
+void Criar_Arquivo_Sessao(Lista_din_enc L, char arquivo[TAM_ARQ]){
+    Ponteiro P;
+
+	if(Verifica_Lista_Vazia(L))
+        Mensagens(11);
+    else {
+        P = L.Prim;
+		while(P!=L.Ult){
+		    Exibir_Elemento(P->Prox->Item);
+		    if(P->Prox->Item.nome == arquivo){
+                Mensagens(5);
+		    }
+            P=P->Prox;
+        }
+    }
 }
 
 /********************* M A T R I Z *********************/
@@ -568,7 +587,7 @@ void Mensagens(int op){
             printf("ESTE CODIGO NAO ESTA DISPONIVEL!");
             break;
         case 11:
-            printf("LISTA VAZIA !!!");
+            printf("\n            LISTA VAZIA !!!\n");
             break;
     }
 }
