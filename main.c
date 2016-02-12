@@ -61,7 +61,7 @@ void Consulta_Elemento(Lista_din_enc , int);
 void Consulta_Elemento_Sessao(Lista_din_enc L, int cod);
 void Dados_Pessoa(T_Pessoa *X);
 void Dados_Sessao(T_Sessao *S);
-void Gravar_Arquivo(char arquivo[TAM_ARQ], Lista_din_enc *L);
+void Gravar_Arquivo(char arquivo[TAM_ARQ], Lista_din_enc *L,int tipo);
 void Gravar_Arquivo_Sessoes(Lista_din_enc *L);
 void Carregar_Arquivo(char arquivo[TAM_ARQ], Lista_din_enc *L, T_Pessoa X);
 void Carregar_Sessoes(Lista_din_enc *L, T_Sessao S);
@@ -157,7 +157,7 @@ void Menu_ADM(){
                 }
                 Criar_Lista_Vazia(&L_NEW);
                 strcpy(arquivo,S.nome);
-                Gravar_Arquivo(arquivo,&L_NEW);
+                Gravar_Arquivo(arquivo,&L_NEW, 1);
                 Mensagens(8);
                 Mensagens(5);
                 break;
@@ -213,7 +213,7 @@ void Menu_Sessao(char arquivo[TAM_ARQ]){
                 Mostrar_Painel(matriz);//Mostra o Painel atualizado
                 Comprar_Cadeira(matriz,&X);
                 Insere_Elemento_Lista(&L,X); // Realiza a compra de uma cadeira no painel, marcando c/ um X
-                Gravar_Arquivo(arquivo,&L);
+                Gravar_Arquivo(arquivo,&L,0);
                 Limpar_Tela();
                 Mensagens(8);
                 Mensagens(5);
@@ -223,7 +223,7 @@ void Menu_Sessao(char arquivo[TAM_ARQ]){
                 Mostrar_Painel(matriz);//Mostra o Painel atualizado
                 Reservar_Cadeira(matriz,&X);
                 Insere_Elemento_Lista(&L,X); // Realiza a compra de uma cadeira no painel, marcando c/ um X
-                Gravar_Arquivo(arquivo,&L);
+                Gravar_Arquivo(arquivo,&L, 0);
                 Limpar_Tela();
                 Mensagens(8);
                 Mensagens(5);
@@ -470,8 +470,8 @@ void Dados_Sessao(T_Sessao *S){
     scanf("%s", S->event_date);
 }
 
-/* Grava arquivos a partir de um nome */
-void Gravar_Arquivo(char arquivo[TAM_ARQ], Lista_din_enc *L){
+/* Grava arquivos a partir de um nome tipo 0 = Pessoa / 1 = Sessao*/
+void Gravar_Arquivo(char arquivo[TAM_ARQ], Lista_din_enc *L, int tipo){
     FILE *arq;
     Ponteiro P;
     char arq_set[TAM_ARQ];
@@ -483,21 +483,37 @@ void Gravar_Arquivo(char arquivo[TAM_ARQ], Lista_din_enc *L){
         k++;
     }
     strcat(arq_set, buffer);
-//    printf("%s", arq_set);
-//    Mensagens(5);
-    if((arq = fopen(arq_set, "wb")) == NULL){ /* Abre arquivo binário para escrita */
-        printf("Erro na abertura do arquivo");
-        Mensagens(5);
-        exit(1);
-    }
-    if(arq!=NULL){
-        P = L->Prim->Prox;
-        while(P!=NULL){
-            fwrite(&(P->Item), sizeof(T_Pessoa),1,arq);   //Fecha arquivo
-            P=P->Prox;
+
+    if(tipo == 0){
+        if((arq = fopen(arq_set, "wb")) == NULL){ /* Abre arquivo binário para escrita */
+            printf("Erro na abertura do arquivo");
+            Mensagens(5);
+            exit(1);
         }
-        fclose(arq);
+        if(arq!=NULL){
+            P = L->Prim->Prox;
+            while(P!=NULL){
+                fwrite(&(P->Item), sizeof(T_Pessoa),1,arq);   //Fecha arquivo
+                P=P->Prox;
+            }
+            fclose(arq);
+        }
+    }else if(tipo == 1){
+        if((arq = fopen(arq_set, "wb")) == NULL){ /* Abre arquivo binário para escrita */
+            printf("Erro na abertura do arquivo");
+            Mensagens(5);
+            exit(1);
+        }
+        if(arq!=NULL){
+            P = L->Prim->Prox;
+            while(P!=NULL){
+                fwrite(&(P->S_Item), sizeof(T_Sessao),1,arq);   //Fecha arquivo
+                P=P->Prox;
+            }
+            fclose(arq);
+        }
     }
+
 }
 
 /* Grava um arquivo de nome sessoes.dat */
@@ -509,7 +525,7 @@ void Gravar_Arquivo_Sessoes(Lista_din_enc *L){
       {
         P=L->Prim->Prox;
         while(P!=NULL)
-          { fwrite(&(P->Item), sizeof(T_Pessoa),1,arq);   //fechamento
+          { fwrite(&(P->S_Item), sizeof(T_Sessao),1,arq);   //fechamento
             P=P->Prox;
            }
         fclose(arq);
@@ -529,8 +545,6 @@ void Carregar_Arquivo(char arquivo[TAM_ARQ], Lista_din_enc *L, T_Pessoa X){
     }
 
     strcat(arq_set, buffer);
-//    printf("%s", arq_set);
-//    Mensagens(5);
 
     if((arq = fopen(arq_set, "rb")) == NULL){ /* Abre o arquivo novamente para leitura */
        Mensagens(16);
